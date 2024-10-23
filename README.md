@@ -16,7 +16,7 @@ pip install mavro
 2. Open a terminal
 3. Run the following snippet in your terminal:
     ```commandline
-    echo "" > main.mav
+    mavro -c
     ```
 4. You can navigate to the main.mav file in your IDE or text editor, and start coding!
 5. When you want to run your project, use one of the following commands:
@@ -27,7 +27,7 @@ pip install mavro
     mavro path/to/my/mavro_file.mav # Runs ./path/to/my/mavro_file.mav
     ```
 
-## Keyword list (52: 28 imported from python, 24 new)
+## Keyword list (57: 30 imported from python, 27 new)
 - and - imported from python. Only returns true if both the left-hand AND right-hand conditions are true.
 - as - imported from python. Gives something an alias, like an import or context manager.
 - assert - imported from python. Raises an AssertionError if the condition is false.

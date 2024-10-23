@@ -1,3 +1,4 @@
+import os
 import sys
 from typing import Callable
 
@@ -20,6 +21,11 @@ def strap(parser: LensParser, print: Callable = print, *packages: Package) -> st
             raise error
     if result.error:
         print(f"fatal error (internal): \033[31m{result.error}\033[0m")
+        try:
+            input("  press return to submit an issue, or ctrl-c to skip this.")
+            os.system("start https://github.com/elemenom/mavro/issues/new")
+        except KeyboardInterrupt:
+            ...
         if "--verbose" in sys.argv:
             raise result.error
     return result.output.cont if not result.error else ""

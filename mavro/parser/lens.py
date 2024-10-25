@@ -15,6 +15,16 @@ class LensParserResult(LineParserResult):
 
 
 class LensParser:
+    LINE_LOADER_BEFORE: list[str] = """
+from mavro.pkg.std import *
+function raiseError exc
+    raise exc
+end
+const callable print = lambda *_, **__: raiseError(SyntaxError("'print' is deprecated and cannot be used. Use 'Console.print' instead."))
+const callable input = lambda *_, **__: raiseError(SyntaxError("'input' is deprecated and cannot be used. Use 'Console.input' instead."))
+const callable exit = lambda *_, **__: raiseError(SyntaxError("'exit' is deprecated and cannot be used. Use 'System.exit' instead."))
+del raiseError
+""".split("\n")
     def __init__(self, cont: str, baseline: LineParser, line_loader: Callable | None = None) -> None:
         """The line_loader parameter shouldn't need to be changed."""
         self.cont: str = cont
@@ -23,28 +33,34 @@ class LensParser:
         self.baseline: LineParser = baseline
     @staticmethod
     def stdLoadLines(cont: str) -> list[str]:
-        lns: list[str] = ["from mavro.pkg.std import *",
+        AFTER: list[str] = """
+import sys
+try
+    __entrypoint__
+end
+catch NameError
+    raise SyntaxError('File has no entrypoint.')
+end
+only private
+    .__entrypoint__
+    System::exit(0)
+end
+""".split("\n")
+        lns: list[str] = [*LensParser.LINE_LOADER_BEFORE,
                           *cont.split("\n"),
-                          "import sys",
-                          "try",
-                          "__entrypoint__",
-                          "end",
-                          "catch NameError",
-                          "raise SyntaxError('File has no entrypoint.')",
-                          "end",
-                          "if __name__ == \"__main__\"",
-                          f"__entrypoint__()",
-                          "end"
+                          *AFTER
         ]
         return lns
     @staticmethod
     def stdLoadLinesWithoutEntrypoint(cont: str) -> list[str]:
-        lns: list[str] = ["from mavro.pkg.std import *", *cont.split("\n")]
+        lns: list[str] = [*LensParser.LINE_LOADER_BEFORE,
+                          *cont.split("\n")
+        ]
         return lns
     @staticmethod
     def loadPackage(package: Package, import_type: PackageImportType, arg: str) -> str | Exception:
         if package.origin != "mavro/pkg":
-            return ImportError("Tried retrieving pkg that doesn't seem to originate from mavro's verified pkg source (mavro/pkg)")
+            return ImportError("Tried retrieving a pkg that doesn't seem to originate from mavro's verified pkg source (mavro/pkg)")
         text: str | Exception = package.getImportStatement(import_type, arg)
         return text
     def parse(self) -> LensParserResult:
@@ -80,7 +96,7 @@ class LensParser:
                 for suggestion in result.output.suggestions:
                     self.lns.insert(ln_num + 1, suggestion.apply(parser))
                 if isinstance(result.output, SimpleNamespace):
-                    cont: str = result.output.cont.lstrip()
+                    cont: str = result.output.cont.strip()
                 else:
                     print(f"Unexpected type for result.output: {type(result.output)}")
                     continue
@@ -169,7 +185,7 @@ class LensParser:
                     cont = "# end"
                     indent -= 4
                 elif cont == "only private":
-                    cont = "if __main__ == \"__name__\":"
+                    cont = "if __name__ == \"__main__\":"
                     indent += 4
                 elif cont == "only public":
                     cont = "if __name__ != \"__main__\":\n"
@@ -192,11 +208,11 @@ class LensParser:
                     indent += 4
                 elif cont.startswith("constructor"):
                     parts: list[str] = cont.split(" ", 1)
-                    cont = f"def __init__(self, {parts[1] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."
+                    cont = f"def __init__(self, {parts[1] if len(parts) > 1 else ""}):\n{" " * (original_indent + 4)}..."
                     indent += 4
                 elif cont.startswith("starter"):
                     parts: list[str] = cont.split(" ", 1)
-                    cont = f"def __starter__(self, {parts[1] if len(parts) > 3 else ""
+                    cont = f"def __starter__(self, {parts[1] if len(parts) > 1 else ""
                     }):\n{" " * (original_indent + 4)}..."
                     indent += 4
                 elif cont.startswith("startprocess "):

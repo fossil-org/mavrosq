@@ -48,7 +48,7 @@ def build_from_sys_argv() -> None:
     usage: str = "python.exe"
     if "-u" in args:
         try:
-            usage = args[args.index("-u") + 1]g
+            usage = args[args.index("-u") + 1]
         except IndexError:
             print("'-u' argument expected one parameter.")
             sys.exit(1)

@@ -13,6 +13,7 @@ def public__findService(module: str) -> _ModuleType | None:
             raise ImportError(f"Mavro module '{module}' not found in '{_os.getcwd()}'")
         from ..internal.build import build
         build(
+            usage="python.exe",
             path=module,
             dist_path=module.removesuffix(".mav") + ".py",
             no_delete=True,

@@ -17,13 +17,12 @@ class LensParserResult(LineParserResult):
 class LensParser:
     LINE_LOADER_BEFORE: list[str] = """
 from mavro.pkg.std import *
-function raiseError exc
+function _ignoredRaiseError exc
     raise exc
 end
-const callable print = lambda *_, **__: raiseError(SyntaxError("'print' is deprecated and cannot be used. Use 'Console.print' instead."))
-const callable input = lambda *_, **__: raiseError(SyntaxError("'input' is deprecated and cannot be used. Use 'Console.input' instead."))
-const callable exit = lambda *_, **__: raiseError(SyntaxError("'exit' is deprecated and cannot be used. Use 'System.exit' instead."))
-del raiseError
+const callable print = lambda *_, **__: _ignoredRaiseError(SyntaxError("'print' is deprecated and cannot be used. Use 'Console.print' instead."))
+const callable input = lambda *_, **__: _ignoredRaiseError(SyntaxError("'input' is deprecated and cannot be used. Use 'Console.input' instead."))
+const callable exit = lambda *_, **__: _ignoredRaiseError(SyntaxError("'exit' is deprecated and cannot be used. Use 'System.exit' instead."))
 """.split("\n")
     def __init__(self, cont: str, baseline: LineParser, line_loader: Callable | None = None) -> None:
         """The line_loader parameter shouldn't need to be changed."""
@@ -126,6 +125,10 @@ end
                     parts: list[str] = cont.split(" ", 3)
                     cont = f"@staticmethod\n{" " * original_indent}def {parts[2]}({parts[3] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."
                     indent += 4
+                elif cont.startswith("self method "):
+                    parts: list[str] = cont.split(" ", 3)
+                    cont = f"def {parts[2]}(self, {parts[3] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."
+                    indent += 4
                 elif cont.startswith("public function "):
                     parts: list[str] = cont.split(" ", 3)
                     cont = f"def public__{parts[2]}({parts[3] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."
@@ -134,29 +137,11 @@ end
                     parts: list[str] = cont.split(" ", 3)
                     cont = f"def public__{parts[2]}(self, {parts[3] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("enumeration(any) "):
-                    parts: list[str] = cont.split(" ", 2)
-                    if "import mavro.pkg.enum as enum" not in output["cont"]:
-                        raise SyntaxError("Attempted enum declaration while the enum package wasn't imported.")
-                    cont = f"class {parts[1]}(enum._Enum):\n{" " * (original_indent + 4)}..."
-                    indent += 4
                 elif cont.startswith("require "):
                     parts: list[str] = cont.split(" ", 2)
                     if "import mavro.pkg.requiry as requiry" not in output["cont"]:
                         raise SyntaxError("Attempted fetching of Mavro module while the requiry package wasn't imported.")
                     cont = f"{parts[1]} = requiry.public__findService(\"{parts[1]}.mav\")"
-                elif cont.startswith("enumeration(str) "):
-                    parts: list[str] = cont.split(" ", 2)
-                    if "import mavro.pkg.enum as enum" not in output["cont"]:
-                        raise SyntaxError("Attempted enum declaration while the enum package wasn't imported.")
-                    cont = f"class {parts[1]}(enum._StrEnum):\n{" " * (original_indent + 4)}..."
-                    indent += 4
-                elif cont.startswith("enumeration(int) "):
-                    parts: list[str] = cont.split(" ", 2)
-                    if "import mavro.pkg.enum as enum" not in output["cont"]:
-                        raise SyntaxError("Attempted enum declaration while the enum package wasn't imported.")
-                    cont = f"class {parts[1]}(enum._IntEnum):\n{" " * (original_indent + 4)}..."
-                    indent += 4
                 elif cont.startswith("def "):
                     raise SyntaxError("Python 'def' keyword is not supported in Mavro. Use 'function' instead")
                 elif cont.startswith("if "):

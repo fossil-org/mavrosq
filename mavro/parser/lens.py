@@ -125,7 +125,7 @@ end
                     parts: list[str] = cont.split(" ", 3)
                     cont = f"@staticmethod\n{" " * original_indent}def {parts[2]}({parts[3] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("self method "):
+                elif cont.startswith("special method "):
                     parts: list[str] = cont.split(" ", 3)
                     cont = f"def {parts[2]}(self, {parts[3] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."
                     indent += 4

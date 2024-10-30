@@ -1,0 +1,26 @@
+import os
+
+
+public class Terminal extends System.BaseClass
+	starter
+		while true
+			local const System.String cmd = Console::input("{os.getcwd()} | ")
+			if cmd == "exit"
+				return
+			end
+			else
+				.os.system cmd
+			end
+		end
+	end
+end
+local function createTerminal
+	savelocation
+	return here::Terminal()
+end
+
+savelocation
+entrypoint
+	local const Terminal terminal = createTerminal()
+	startprocess terminal
+end

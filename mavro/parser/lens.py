@@ -17,12 +17,37 @@ class LensParserResult(LineParserResult):
 class LensParser:
     LINE_LOADER_BEFORE: list[str] = """
 from mavro.pkg.std import *
-function _ignoredRaiseError exc
-    raise exc
+const System System = System()
+package console
+package string
+.System::merge console.Console, method=System.ORIGIN
+.System::merge string, method=System.SPARE
+startprocess System.Console
+local const console.Console Console = System.Console
+savelocation
+""".split("\n")
+    LINE_LOADER_AFTER: list[str] = """
+function _deprecated name, sub=null
+    function wrapper *_, **__
+        raise DeprecationError("'{name}' is deprecated and cannot be used. {'Use \\'{}\\' instead.'.format(sub) if sub else ''}")
+    end
+    return wrapper
 end
-const callable print = lambda *_, **__: _ignoredRaiseError(SyntaxError("'print' is deprecated and cannot be used. Use 'Console.print' instead."))
-const callable input = lambda *_, **__: _ignoredRaiseError(SyntaxError("'input' is deprecated and cannot be used. Use 'Console.input' instead."))
-const callable exit = lambda *_, **__: _ignoredRaiseError(SyntaxError("'exit' is deprecated and cannot be used. Use 'System.exit' instead."))
+const callable print = _deprecated("print", "console.Console::print")
+const callable input = _deprecated("input", "console.Console::input")
+const callable exit = _deprecated("exit", "System.exit")
+const callable str = _deprecated("str", "string.BaseString")
+import sys
+try
+    __entrypoint__
+end
+catch NameError
+    raise EntrypointError('File has no entrypoint.')
+end
+only private
+    .__entrypoint__
+    System::exit(0)
+end
 """.split("\n")
     def __init__(self, cont: str, baseline: LineParser, line_loader: Callable | None = None) -> None:
         """The line_loader parameter shouldn't need to be changed."""
@@ -32,22 +57,9 @@ const callable exit = lambda *_, **__: _ignoredRaiseError(SyntaxError("'exit' is
         self.baseline: LineParser = baseline
     @staticmethod
     def stdLoadLines(cont: str) -> list[str]:
-        AFTER: list[str] = """
-import sys
-try
-    __entrypoint__
-end
-catch NameError
-    raise SyntaxError('File has no entrypoint.')
-end
-only private
-    .__entrypoint__
-    System::exit(0)
-end
-""".split("\n")
         lns: list[str] = [*LensParser.LINE_LOADER_BEFORE,
                           *cont.split("\n"),
-                          *AFTER
+                          *LensParser.LINE_LOADER_AFTER
         ]
         return lns
     @staticmethod
@@ -95,24 +107,28 @@ end
                 for suggestion in result.output.suggestions:
                     self.lns.insert(ln_num + 1, suggestion.apply(parser))
                 if isinstance(result.output, SimpleNamespace):
-                    cont: str = result.output.cont.strip()
+                    cont: str = result.output.cont.strip().removeprefix("local ")
                 else:
                     print(f"Unexpected type for result.output: {type(result.output)}")
                     continue
                 if cont.startswith("let ") or cont.startswith("const "):
-                    parts: list[str] = cont.split(" ", 3)
+                    parts: list[str] = cont.split(" ", 2)
                     try:
-                        cont = f"{parts[2].rstrip(";")}: {parts[1]}{parts[3]}"
+                        cont = f"{parts[2][:parts[2].index("=")]}: {parts[1]}{parts[2][parts[2].index("="):]}"
+                        if parts[1] == "str":
+                            cont = f"str()"
                     except IndexError:
-                        raise TypeError(f"Not enough parameters for variable definition. Usage: `let|const <type> <name> = <value>`")
+                        raise TypeError(f"Not enough parameters for variable definition. Usage: {parts[0]} <type> <name> = <value>`")
                 elif cont.startswith("public const "):
                     parts: list[str] = cont.split(" ", 4)
                     try:
-                        cont = f"public__{parts[3].rstrip(";")}: {parts[2]}{parts[4]}"
+                        cont = f"public__{parts[3][:parts[3].index("=")]}: {parts[2]}{parts[3][parts[3].index("="):]}"
+                        if parts[2] == "str":
+                            cont = f"str()"
                     except IndexError:
-                        raise TypeError(f"Not enough parameters for variable definition. Usage: `let|const <type> <name> = <value>`")
+                        raise TypeError(f"Not enough parameters for public variable definition. Usage: `public {parts[1]} <type> <name> = <value>`")
                 elif cont.startswith("public let "):
-                    raise TypeError("Variables declared with `let` cannot be public.")
+                    raise TypeError("Variables declared with 'let' cannot be public.")
                 elif cont.startswith("function "):
                     parts: list[str] = cont.split(" ", 2)
                     cont = f"def {parts[1]}({parts[2] if len(parts) > 2 else ""}):\n{" " * (original_indent + 4)}..."
@@ -121,10 +137,20 @@ end
                     parts: list[str] = cont.split(" ", 2)
                     cont = f"def {parts[1]}(self, {parts[2] if len(parts) > 2 else ""}):\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("static function "):
+                elif cont.startswith("apply "):
+                    parts: list[str] = cont.split(" ", 1)
+                    cont = f"@{parts[1]}"
+                elif cont.startswith("remote "):
                     parts: list[str] = cont.split(" ", 3)
-                    cont = f"@staticmethod\n{" " * original_indent}def {parts[2]}({parts[3] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."
+                    cont = f"@lambda _: _()\n{" " * original_indent}class {parts[2]}({parts[1]}):\n{" " * (original_indent + 4)}..."
                     indent += 4
+                elif cont.startswith("root "):
+                    parts: list[str] = cont.split(" ", 2)
+                    if parts[1] == "...":
+                        cont = ""
+                    else:
+                        cont = f"@{parts[1]}"
+                    self.lns.insert(ln_num, parts[2])
                 elif cont.startswith("special method "):
                     parts: list[str] = cont.split(" ", 3)
                     cont = f"def {parts[2]}(self, {parts[3] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."

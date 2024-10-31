@@ -25,19 +25,19 @@ package string
 startprocess System.Console
 local const console.Console Console = System.Console
 savelocation
-""".split("\n")
-    LINE_LOADER_AFTER: list[str] = """
+
 function _deprecated name, sub=null
     function wrapper *_, **__
         raise DeprecationError("'{name}' is deprecated and cannot be used. {'Use \\'{}\\' instead.'.format(sub) if sub else ''}")
     end
     return wrapper
 end
-const callable print = _deprecated("print", "console.Console::print")
-const callable input = _deprecated("input", "console.Console::input")
-const callable exit = _deprecated("exit", "System.exit")
-const callable str = _deprecated("str", "string.BaseString")
-import sys
+const callable print = _deprecated("print", "Console::print")
+const callable input = _deprecated("input", "Console::input")
+const callable exit = _deprecated("exit", "System::exit")
+const callable str = _deprecated("str", "System.String")
+""".split("\n")
+    LINE_LOADER_AFTER: list[str] = """
 try
     __entrypoint__
 end

@@ -12,4 +12,4 @@ def identifyCode(code: int) -> str:
     elif code == CodeType.ERROR.value:
         return "failed due to a fatal error"
     else:
-        return "ended with a non-mavro formatted code, which couldn't be identified."
+        return "ended with an unknown formatted code, which couldn't be identified."

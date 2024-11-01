@@ -9,9 +9,10 @@ from .packaging import Package, PackageImportType
 
 
 class LensParserResult(LineParserResult):
-    def __init__(self, output: SimpleNamespace, code: int, error: Exception | None = None, line_errors: list[Exception] | None = None) -> None:
+    def __init__(self, output: SimpleNamespace, code: int, error: Exception | None = None, line_errors: list[Exception] | None = None, dependencies: list[str] | None = None) -> None:
         super().__init__(output, code, error)
-        self.line_errors = line_errors or []
+        self.line_errors: list[Exception] = line_errors or []
+        self.dependencies: list[str] = dependencies or []
 
 
 class LensParser:
@@ -46,7 +47,7 @@ catch NameError
 end
 only private
     .__entrypoint__
-    System::exit(0)
+    .System::exit 0
 end
 """.split("\n")
     def __init__(self, cont: str, baseline: LineParser, line_loader: Callable | None = None) -> None:
@@ -65,7 +66,8 @@ end
     @staticmethod
     def stdLoadLinesWithoutEntrypoint(cont: str) -> list[str]:
         lns: list[str] = [*LensParser.LINE_LOADER_BEFORE,
-                          *cont.split("\n")
+                          *cont.split("\n"),
+                          ".System::exit 0"
         ]
         return lns
     @staticmethod
@@ -87,6 +89,7 @@ end
         }
         indent: int = 0
         line_errors: list[Exception] = []
+        dependencies: list[str] = []
         try:
             for ln_num, ln in enumerate(self.lns, start=1):
                 if isinstance(ln, str):
@@ -119,6 +122,9 @@ end
                             cont = f"str()"
                     except IndexError:
                         raise TypeError(f"Not enough parameters for variable definition. Usage: {parts[0]} <type> <name> = <value>`")
+                elif cont.startswith("import "):
+                    parts: list[str] = cont.split(" ", 2)
+                    dependencies.append(parts[1])
                 elif cont.startswith("public const "):
                     parts: list[str] = cont.split(" ", 4)
                     try:

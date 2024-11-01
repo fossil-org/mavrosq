@@ -9,7 +9,7 @@ from mavro import version
 setup(
     name='Mavro',
     version=version,
-    author='elemenom',
+    author='astridot',
     author_email='pixilreal@gmail.com',
     description='An easy to understand language built from Python.',
     long_description=read_long_description(),
@@ -21,7 +21,7 @@ setup(
         'Operating System :: OS Independent',
     ],
     python_requires='>=3.12',
-    install_requires=[],
+    install_requires=["pyinstaller"],
     entry_points={
         'console_scripts': [
             'mavro=mavro.internal.build:build_from_sys_argv'

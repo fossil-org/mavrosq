@@ -4,6 +4,9 @@ from typing import Any as unknown # NOQA
 from typing import Callable as callable # NOQA
 import sys as _sys
 import os as _os
+
+from mavro.parser.coding import CodeType
+
 true: True = True
 false: False = False
 null: None = None
@@ -29,7 +32,8 @@ class System:
     SPARE: int = 1
     ORIGIN: int = 2
     def public__exit(self, code: int = 0) -> None: # NOQA
-        print(f"\nexited with code {code}")
+        from ..parser.coding import identifyCode
+        print(f"\n{identifyCode(code)} (code {code})")
         _sys.exit(code)
     def public__createError(self, name: str) -> type: # NOQA
         return type(name, (Exception,), {})

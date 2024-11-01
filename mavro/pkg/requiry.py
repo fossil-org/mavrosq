@@ -17,7 +17,8 @@ def public__findService(module: str) -> _ModuleType | None:
             path=module,
             dist_path=module.removesuffix(".mav") + ".py",
             no_delete=True,
-            line_loader=_LensParser.stdLoadLinesWithoutEntrypoint
+            line_loader=_LensParser.stdLoadLinesWithoutEntrypoint,
+            run=False
         )
         module_literal: _ModuleType = _import_module(module.removesuffix(".mav"))
     finally:

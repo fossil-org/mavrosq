@@ -8,6 +8,7 @@ from mavro.parser.lens import LensParser as _LensParser
 
 
 def public__findService(module: str) -> _ModuleType | None:
+    pyname: str = f"{module.removesuffix(".mav")}_requiry.py"
     try:
         if not _path.exists(module):
             raise ImportError(f"Mavro module '{module}' not found in '{_os.getcwd()}'")
@@ -15,16 +16,16 @@ def public__findService(module: str) -> _ModuleType | None:
         build(
             usage="python.exe",
             path=module,
-            dist_path=module.removesuffix(".mav") + ".py",
+            dist_path=pyname,
             no_delete=True,
             line_loader=_LensParser.stdLoadLinesWithoutEntrypoint,
             run=False
         )
-        module_literal: _ModuleType = _import_module(module.removesuffix(".mav"))
+        module_literal: _ModuleType = _import_module(pyname.removesuffix(".py"))
     finally:
         try:
-            os.remove(module.removesuffix(".mav") + ".py")
-        except Exception as err: # NOQA
-            print(f"module error: {module} could not be cleaned up. ({err})")
+            os.remove(pyname)
+        except FileNotFoundError:
+            print(f"module error: could not clean {pyname}")
             return
     return module_literal

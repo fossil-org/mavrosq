@@ -21,10 +21,11 @@ from mavro.pkg.std import *
 const System System = System()
 package console
 package string
-.System::merge console.Console, method=System.ORIGIN
-.System::merge string, method=System.SPARE
+System::merge console.Console, method=System.ORIGIN
+System::merge string, method=System.SPARE
 startprocess System.Console
-local const console.Console Console = System.Console
+const console.Console Console = System.Console
+const string.String String = System.String
 savelocation
 
 function _deprecated name, sub=null
@@ -37,17 +38,17 @@ const callable print = _deprecated("print", "Console::print")
 const callable input = _deprecated("input", "Console::input")
 const callable exit = _deprecated("exit", "System::exit")
 const callable str = _deprecated("str", "System.String")
+del console, string
 """.split("\n")
     LINE_LOADER_AFTER: list[str] = """
 try
-    __entrypoint__
-end
+    remark __entrypoint__
 catch NameError
-    raise EntrypointError('File has no entrypoint.')
-end
-only private
-    .__entrypoint__
-    .System::exit 0
+else
+    only private
+        __entrypoint__
+        System::exit 0
+    end
 end
 """.split("\n")
     def __init__(self, cont: str, baseline: LineParser, line_loader: Callable | None = None) -> None:
@@ -66,8 +67,7 @@ end
     @staticmethod
     def stdLoadLinesWithoutEntrypoint(cont: str) -> list[str]:
         lns: list[str] = [*LensParser.LINE_LOADER_BEFORE,
-                          *cont.split("\n"),
-                          ".System::exit 0"
+                          *cont.split("\n")
         ]
         return lns
     @staticmethod
@@ -76,6 +76,15 @@ end
             return ImportError("Tried retrieving a pkg that doesn't seem to originate from mavro's verified pkg source (mavro/pkg)")
         text: str | Exception = package.getImportStatement(import_type, arg)
         return text
+    @staticmethod
+    def _includeKwCheck(cont: str) -> bool:
+        import keyword
+        kws: list[str] = list(keyword.kwlist)
+
+        for kw in kws:
+            if cont.startswith(f"{kw} ") or cont == kw:
+                return True
+        return False
     def parse(self) -> LensParserResult:
         def error(exc: Exception) -> LensParserResult:
             return LensParserResult(
@@ -122,8 +131,27 @@ end
                             cont = f"str()"
                     except IndexError:
                         raise TypeError(f"Not enough parameters for variable definition. Usage: {parts[0]} <type> <name> = <value>`")
+                elif cont.startswith("remark "):
+                    cont = cont.removeprefix("remark ")
                 elif cont.startswith("import "):
-                    parts: list[str] = cont.split(" ", 2)
+                    parts: list[str] = cont.split(" ", 4)
+                    if "import mavro.pkg.requiry as requiry" in output["cont"] and "." not in parts[1]:
+                        alias: str = ""
+                        if len(parts) > 2:
+                            if parts[2] == "as":
+                                alias = parts[3]
+                        cont = f"{alias or parts[1]} = System.public__ensure(lambda: System.public__importPython('{parts[1]}'), None, ModuleNotFoundError) or requiry.public__findService('{parts[1]}.mav')"
+                    dependencies.append(parts[1])
+                elif cont.startswith("from "):
+                    parts: list[str] = cont.split(" ", 6)
+                    if parts[2] != "import":
+                        raise SyntaxError("'from' keyword expected 'import'")
+                    if "import mavro.pkg.requiry as requiry" in output["cont"] and "." not in parts[1]:
+                        alias: str = ""
+                        if len(parts) > 4:
+                            if parts[4] == "as":
+                                alias = parts[5]
+                        cont = f"{alias or parts[3]} = (System.public__ensure(lambda: System.public__importPython('{parts[1]}'), None, ModuleNotFoundError) or requiry.public__findService('{parts[1]}.mav')).{parts[3]}"
                     dependencies.append(parts[1])
                 elif cont.startswith("public const "):
                     parts: list[str] = cont.split(" ", 4)
@@ -173,7 +201,7 @@ end
                     parts: list[str] = cont.split(" ", 2)
                     if "import mavro.pkg.requiry as requiry" not in output["cont"]:
                         raise SyntaxError("Attempted fetching of Mavro module while the requiry package wasn't imported.")
-                    cont = f"{parts[1]} = requiry.public__findService(\"{parts[1]}.mav\")"
+                    cont = f"{parts[1]} = requiry.public__findService('{parts[1]}.mav')"
                 elif cont.startswith("def "):
                     raise SyntaxError("Python 'def' keyword is not supported in Mavro. Use 'function' instead")
                 elif cont.startswith("if "):
@@ -181,25 +209,28 @@ end
                     cont = f"if {parts[1]}:\n{" " * (original_indent + 4)}..."
                     indent += 4
                 elif cont.startswith("else if "):
+                    original_indent -= 4
                     parts: list[str] = cont.split(" ", 1)
                     cont = f"elif {parts[1]}:\n{" " * (original_indent + 4)}..."
-                    indent += 4
                 elif cont.startswith("elif "):
                     raise SyntaxError("Python 'elif' keyword is not supported in Mavro. Use 'else if' instead")
                 elif cont == "else":
+                    original_indent -= 4
                     cont = f"else:\n{" " * (original_indent + 4)}..."
-                    indent += 4
                 elif cont == "try":
                     cont = f"try:\n{" " * (original_indent + 4)}..."
                     indent += 4
                 elif cont == "finally":
+                    original_indent -= 4
                     cont = f"finally:\n{" " * (original_indent + 4)}..."
-                    indent += 4
                 elif cont == "entrypoint":
                     cont = f"def __entrypoint__() -> int:\n{" " * (original_indent + 4)}..."
                     indent += 4
                 elif cont == "end":
-                    cont = "# end"
+                    cont = f"# end"
+                    indent -= 4
+                elif cont.startswith("end "):
+                    self.lns.insert(ln_num + 1, cont.removeprefix("end "))
                     indent -= 4
                 elif cont == "only private":
                     cont = "if __name__ == \"__main__\":"
@@ -210,9 +241,9 @@ end
                 elif cont == "savelocation":
                     cont = f"from types import SimpleNamespace\n{" " * original_indent}here = SimpleNamespace(**(globals() | locals()))\n{" " * original_indent}del SimpleNamespace"
                 elif cont.startswith("catch "):
+                    original_indent -= 4
                     parts: list[str] = cont.split(" ", 1)
                     cont = f"except {parts[1]}:\n{" " * (original_indent + 4)}..."
-                    indent += 4
                 elif cont.startswith("except "):
                     raise SyntaxError("Python 'except' keyword is not supported in Mavro. Use 'catch' instead")
                 elif cont.startswith("while "):
@@ -226,6 +257,10 @@ end
                 elif cont.startswith("constructor"):
                     parts: list[str] = cont.split(" ", 1)
                     cont = f"def __init__(self, {parts[1] if len(parts) > 1 else ""}):\n{" " * (original_indent + 4)}..."
+                    indent += 4
+                elif cont.startswith("extends constructor"):
+                    parts: list[str] = cont.split(" ", 2)
+                    cont = f"def __init__(self, {parts[2] if len(parts) > 2 else ""}):\n{" " * (original_indent + 4)}super().__init__({parts[2] if len(parts) > 2 else ""})"
                     indent += 4
                 elif cont.startswith("starter"):
                     parts: list[str] = cont.split(" ", 1)
@@ -263,24 +298,6 @@ end
                     parts: list[str] = cont.split(" ", 2)
                     cont = f"with open({parts[1]}, {parts[2]}) as file:\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith(".") and cont != "...":
-                    cont = cont.removeprefix(".").lstrip()
-                    parts: list[str] = cont.split(" ", 1)
-                    while True:
-                        if parts[0] == "":
-                            parts.pop(0)
-                        else:
-                            break
-                    cont = f"{parts[0]}({parts[1] if len(parts) > 1 else ""})"
-                elif cont.startswith("::"):
-                    cont = cont.removeprefix("::").lstrip()
-                    parts: list[str] = cont.split(" ", 1)
-                    while True:
-                        if parts[0] == "":
-                            parts.pop(0)
-                        else:
-                            break
-                    cont = f"public__{parts[0]}({parts[1] if len(parts) > 1 else ""})"
                 elif cont.startswith("package "):
                     parts: list[str] = cont.split(" ", 1)
                     try:
@@ -298,6 +315,11 @@ end
                         cont = package_result
                     except Exception as exception:
                         raise exception
+                elif self._includeKwCheck(cont):
+                    ...
+                else:
+                    parts: list[str] = cont.split(" ", 1)
+                    cont = f"{parts[0]}({parts[1] if len(parts) > 1 else ""})"
                 cont = f"{" " * original_indent}{cont}"
                 output["cont"] += cont + "\n" # NOQA
                 indent += result.output.indent # NOQA

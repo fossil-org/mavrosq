@@ -3,9 +3,7 @@ from typing import Any as any # NOQA
 from typing import Any as unknown # NOQA
 from typing import Callable as callable # NOQA
 import sys as _sys
-import os as _os
 
-from mavro.parser.coding import CodeType
 
 true: True = True
 false: False = False
@@ -31,12 +29,16 @@ class System:
     PIPE: int = 0
     SPARE: int = 1
     ORIGIN: int = 2
-    def public__exit(self, code: int = 0) -> None: # NOQA
-        from ..parser.coding import identifyCode
-        print(f"\n{identifyCode(code)} (code {code})")
+    def public__exit(self, code: int = 0, silent: bool = False) -> None: # NOQA
+        if not silent:
+            from ..parser.coding import identifyCode
+            print(f"\n{identifyCode(code)} (code {code})")
         _sys.exit(code)
     def public__createError(self, name: str) -> type: # NOQA
         return type(name, (Exception,), {})
+    def public__importPython(self, module: str) -> "ModuleType": # NOQA
+        import importlib
+        return importlib.import_module(module)
     def public__ensure(self, # NOQA
                        action: callable,
                        default: any = None,
@@ -79,6 +81,8 @@ class System:
                 else:
                     setattr(self, name, value)
     class BaseClass:
+        def __init__(self) -> None:
+            self.__name__ = type(self).__name__
         def __starter__(self, *_, **__) -> None:
             raise NotStartableError(
                 f"{type(self).__name__.removeprefix("public__")} doesn't define a starter method, and therefore cannot be started.")

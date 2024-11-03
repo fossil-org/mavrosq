@@ -71,10 +71,11 @@ class LineParser:
                     nearest_char_right: str = ""
                 ############################################################### CUSTOM FUNCTIONALITY
                 # SERVICE GET FUNCTIONALITY
-                if char == ":" and not in_string and (
-                        nearest_char_left.isalnum() or nearest_char_left in ")]") and nearest_char_right == ":" and index != 0:
+                if char == ":" and not in_string and (nearest_char_left.isalnum() or nearest_char_left in ")]") and nearest_char_right == ":" and index != 0:
                     output["cont"] += ".public__"
                     skip_next += 1
+                elif char == "#" and not in_string:
+                    break
                 elif char in "\"'":
                     if (char == in_string) and nearest_char_left != "\\":
                         in_string = ""

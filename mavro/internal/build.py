@@ -1,9 +1,10 @@
 import os
 import subprocess
 import sys
+import pathlib
 from typing import Callable
 
-from mavro.pkg.std import System
+from ..pkg.std import System
 from ..parser.lens import LensParser
 from ..parser.lines import LineParser
 from ..internal.driver import create_temporary_file_from_lens
@@ -79,7 +80,7 @@ def build_from_sys_argv() -> None:
         args[1] = "."
     if os.path.exists(args[1]):
         if os.path.isdir(args[1]):
-            args[1] = f"{args[1].strip("\\/").replace("\\", "/")}/main.mav"
+            args[1] = str(pathlib.Path(args[1]) / "main.mav")
         if "-c" in args or "--create" in args:
             with open(args[1], "w") as file:
                 file.write("entrypoint\n  .print 'main.mav file was created!'\nend")

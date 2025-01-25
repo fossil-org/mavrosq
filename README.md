@@ -1,31 +1,35 @@
-# Mavro (mavrolang)
+# Mavro² (mavrosq)
 
 ## Info
 
-### What is Mavro
-Mavro is a simple language built from Python.
-It is lightweight and flexible.
+### What is Mavro²
+Mavro² is FOSSIL's fork of pixilll/mavro with syntax changes, linux support, and bug fixes.
+
+[Check out pixilll/mavro on GitHub](https://github.com/pixilll/mavro)
+[Check out fossil-org/mavrosq on GitHub](https://github.com/fossil-org/mavrosq)
+[Learn more about FOSSIL aka fossil-org on GitHub](https://github.com/fossil-org)
 
 ### Installation
 ```commandline
-pip install mavro
+git clone https://github.com/pixilll/gavel
+pipx install ./gavel
+gavel install fossil-org mavrosq
 ```
 
-### Start using Mavro
+### Start using Mavro²
 1. Open an IDE or text editor (PyCharm Community Edition or PyCharm Professional Edition is recommended)
 2. Open a terminal
 3. Run the following snippet in your terminal:
     ```commandline
-    mavro -c
+    mavrosq -c
     ```
-4. You can navigate to the main.mav file in your IDE or text editor, and start coding!
-5. When you want to run your project, use one of the following commands:
-    ```commandline
-    mavro # Runs ./main.mav
-    mavro path/to/my/directory/ # Runs ./path/to/my/directory/main.mav
-    mavro my_mavro_file.mav # Runs ./my_mavro_file.mav
-    mavro path/to/my/mavro_file.mav # Runs ./path/to/my/mavro_file.mav
-    ```
+   This creates a main.mvsq file in your current working directory
+4. You can navigate to the main.mvsq file in your IDE or text editor, and start coding!
+    When you want to run your project, use the following command:
+       ```
+       mavrosq main.mvsq
+       ```
+   Replace main.mvsq with your file name.
 
 ## Keyword list (57: 30 imported from python, 27 new)
 - and - imported from python. Only returns true if both the left-hand AND right-hand conditions are true.
@@ -44,7 +48,7 @@ pip install mavro
 - else - imported from python. Defines what happens if an `if` statement fails.
 - else if - NEW. An `if` statement that only runs if the previous `if` statement fails. Python equivalent: `elif`
 - end - NEW. Breaks out of indentation.
-- entrypoint - NEW. Define the entrypoint function of a Mavro file.
+- entrypoint - NEW. Define the entrypoint function of a Mavro² file.
 - enumeration - NEW. Defines an Enum. Python equivalent: `class Foo(enum.Enum)`
 - extends - NEW. Defines inheritance in a class definition. Python equivalent: `class Foo(Bar)`
 - false - NEW. A wrapper for python's `False`
@@ -54,7 +58,7 @@ pip install mavro
 - function - NEW. Defines a function. Python equivalent: `def`
 - global - imported from python. Finds a global variable and places it in the local scope.
 - if - imported from python. Run a block of code if a condition is met.
-- import - imported from python. Import a **python** module or package. It is not compatible with Mavro modules and packages.
+- import - imported from python. Import a **python** module or package. It is not compatible with Mavro² modules and packages.
 - in - imported from python. Checks if an iterable object contains a value.
 - is - imported from python. Compare the IDs of two objects.
 - lambda - imported from python. Create an anonymous function.
@@ -69,12 +73,12 @@ pip install mavro
 - only public - NEW. The following code (until a usage of `end`) can only be run if the file was built as (or as part of) a requirement by the `requiry` package, not directly.
 - openfile - NEW. Opens a file with customizable permissions. Python equivalent: `with open`
 - or - imported from python. Returns true if the left-hand OR right-hand values are true.
-- package - NEW. Imports a Mavro package. These packages include for. ex. `requiry`, which is used to import Mavro files.
-- pass - imported from python. Does absolutely nothing. It is practically useless since Mavro doesn't require anything after an indent.
+- package - NEW. Imports a Mavro² package. These packages include for. ex. `requiry`, which is used to import Mavro² files.
+- pass - imported from python. Does absolutely nothing. It is practically useless since Mavro² doesn't require anything after an indent.
 - public - NEW. Makes the function, class, method, or constant public.
 - raise - imported from python. Raises a fatal error.
 - return - imported from python. Returns a value from a function.
-- require - NEW. Retrieve a Mavro module. Wrapper for `mavro.pkg.requiry::findService`
+- require - NEW. Retrieve a Mavro² module. Wrapper for `Mavro².pkg.requiry::findService`
 - savelocation - NEW. Save all global and local variables in the current location to a variable called `here`. Required to access `public` stuff.
 - starter - NEW. Create a function that runs when the object is run using `startprocess`
 - startprocess - NEW. Run an object's starter method.
@@ -83,4 +87,4 @@ pip install mavro
 - try - NEW. Try a block of code for errors, etc.
 - until - NEW. Loops until a condition is true. Python equivalent: `while not`
 - while - imported from python. Loops while a condition is true.
-- yield - imported from python. Yields a value from a generator function.# mavro
+- yield - imported from python. Yields a value from a generator function.

@@ -1,13 +1,17 @@
+"""
+DISCLAIMER: This file should be preserved even when Mavro² isn't available on PyPI because gavel uses pipx and pipx uses setup.py!!!
+"""
+
 from setuptools import setup, find_packages
 
 def read_long_description():
     with open('README.md', encoding='utf-8') as f:
         return f.read()
 
-from mavro import version
+from mavrosq import version
 
 setup(
-    name='Mavro',
+    name='mavrosq',
     version=version,
     author='astridot',
     author_email='pixilreal@gmail.com',
@@ -24,7 +28,7 @@ setup(
     install_requires=["pyinstaller"],
     entry_points={
         'console_scripts': [
-            'mavro=mavro.internal.build:build_from_sys_argv'
+            'mavsq=mavsq.internal.build:build_from_sys_argv'
         ]
     },
 )

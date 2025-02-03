@@ -9,6 +9,8 @@ Mavro² is FOSSIL's fork of pixilll/mavro with syntax changes, linux support, an
 [Check out fossil-org/mavrosq on GitHub](https://github.com/fossil-org/mavrosq)
 [Learn more about FOSSIL aka fossil-org on GitHub](https://github.com/fossil-org)
 
+DISCLAIMER: fossil-org/mavrosq is separate from pixilll/mavro, and pushes to fossil-org/mavrosq will not be mirrored, proposed, or pushed in pixilll/mavro
+
 ### Installation
 ```commandline
 git clone https://github.com/pixilll/gavel

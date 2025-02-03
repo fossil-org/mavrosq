@@ -28,7 +28,10 @@ setup(
     install_requires=["pyinstaller"],
     entry_points={
         'console_scripts': [
-            'mavsq=mavsq.internal.build:build_from_sys_argv'
+            'mavsq=mavrosq.internal.build:build_from_sys_argv',
+            'mavrosq=mavrosq.internal.build:build_from_sys_argv',
+            'mvsq=mavrosq.internal.build:build_from_sys_argv',
+            'msq=mavrosq.internal.build:build_from_sys_argv'
         ]
     },
 )

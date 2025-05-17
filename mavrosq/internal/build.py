@@ -18,9 +18,9 @@ def build(
         run: bool = True
     ) -> str:
     with open(path) as file_literal:
-        cont: str = file_literal.read()
+        content: str = file_literal.read()
     lens: LensParser = LensParser(
-        cont=cont,
+        content=content,
         baseline=LineParser(),
         line_loader=line_loader
     )

@@ -5,9 +5,9 @@
 ### What is Mavro²
 Mavro² is FOSSIL's fork of pixilll/mavro with syntax changes, linux support, and bug fixes.
 
-[Check out pixilll/mavro on GitHub](https://github.com/pixilll/mavro)
+[Check out pilot-gh/mavro on GitHub](https://github.com/pilot-gh/mavro)
 [Check out fossil-org/mavrosq on GitHub](https://github.com/fossil-org/mavrosq)
-[Learn more about FOSSIL aka fossil-org on GitHub](https://github.com/fossil-org)
+[Learn more about FOSSIL on GitHub](https://github.com/fossil-org)
 
 DISCLAIMER: fossil-org/mavrosq is separate from pixilll/mavro, and pushes to fossil-org/mavrosq will not be mirrored, proposed, or pushed in pixilll/mavro
 
@@ -33,7 +33,7 @@ gavel install fossil-org mavrosq
        ```
    Replace main.mvsq with your file name.
 
-## Keyword list (57: 30 imported from python, 27 new)
+## Keyword list (58: 30 imported from python, 28 new)
 - and - imported from python. Only returns true if both the left-hand AND right-hand conditions are true.
 - as - imported from python. Gives something an alias, like an import or context manager.
 - assert - imported from python. Raises an AssertionError if the condition is false.
@@ -88,5 +88,6 @@ gavel install fossil-org mavrosq
 - true - NEW. A wrapper for python's `True`
 - try - NEW. Try a block of code for errors, etc.
 - until - NEW. Loops until a condition is true. Python equivalent: `while not`
+- upload - NEW. Uploads a variable to `self`. Python equivalent: `self.variable = variable`
 - while - imported from python. Loops while a condition is true.
 - yield - imported from python. Yields a value from a generator function.

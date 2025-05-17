@@ -39,7 +39,7 @@ const callable input = _deprecated("input", "Console::input")
 const callable exit = _deprecated("exit", "System::exit")
 const callable str = _deprecated("str", "System.String")
 del console, string
-""".split("\n")
+""".strip().split("\n")
     LINE_LOADER_AFTER: list[str] = """
 try
     remark __entrypoint__
@@ -50,24 +50,24 @@ else
         System::exit 0
     end
 end
-""".split("\n")
-    def __init__(self, cont: str, baseline: LineParser, line_loader: Callable | None = None) -> None:
+""".strip().split("\n")
+    def __init__(self, content: str, baseline: LineParser, line_loader: Callable | None = None) -> None:
         """The line_loader parameter shouldn't need to be changed."""
-        self.cont: str = cont
+        self.content: str = content
         self.id: str = str(uuid4())
-        self.lns: list[str | LineParserResult] = (line_loader or self.stdLoadLines)(self.cont)
+        self.lns: list[str | LineParserResult] = (line_loader or self.stdLoadLines)(self.content)
         self.baseline: LineParser = baseline
     @staticmethod
-    def stdLoadLines(cont: str) -> list[str]:
+    def stdLoadLines(content: str) -> list[str]:
         lns: list[str] = [*LensParser.LINE_LOADER_BEFORE,
-                          *cont.split("\n"),
+                          *content.split("\n"),
                           *LensParser.LINE_LOADER_AFTER
         ]
         return lns
     @staticmethod
-    def stdLoadLinesWithoutEntrypoint(cont: str) -> list[str]:
+    def stdLoadLinesWithoutEntrypoint(content: str) -> list[str]:
         lns: list[str] = [*LensParser.LINE_LOADER_BEFORE,
-                          *cont.split("\n")
+                          *content.split("\n")
         ]
         return lns
     @staticmethod
@@ -77,12 +77,12 @@ end
         text: str | Exception = package.getImportStatement(import_type, arg)
         return text
     @staticmethod
-    def _includeKwCheck(cont: str) -> bool:
+    def _includeKwCheck(content: str) -> bool:
         import keyword
         kws: list[str] = list(keyword.kwlist)
 
         for kw in kws:
-            if cont.startswith(f"{kw} ") or cont == kw:
+            if content.startswith(f"{kw} ") or content == kw:
                 return True
         return False
     def parse(self) -> LensParserResult:
@@ -94,7 +94,7 @@ end
                 line_errors=line_errors
             )
         output: dict[str, Any] = {
-            "cont": ""
+            "content": ""
         }
         indent: int = 0
         line_errors: list[Exception] = []
@@ -112,194 +112,197 @@ end
                 result: LineParserResult = parser.parse()
                 original_indent: int = indent
                 if "--verbose" in sys.argv:
-                    print(f"Parsing of stack n. {"0" * (3 - len(str(ln_num)))}{ln_num} indented {"0" * (2 - len(str(int(indent / 4))))}{int(indent / 4)} layers {identifyCode(result.code)} (returned code {result.code}) ~ {result.output.cont}")
+                    print(f"Parsing of stack n. {"0" * (3 - len(str(ln_num)))}{ln_num} indented {"0" * (2 - len(str(int(indent / 4))))}{int(indent / 4)} layers {identifyCode(result.code)} (returned code {result.code}) ~ {result.output.content}")
                 if result.error:
                     line_errors.append(result.error)
                     continue
                 for suggestion in result.output.suggestions:
                     self.lns.insert(ln_num + 1, suggestion.apply(parser))
                 if isinstance(result.output, SimpleNamespace):
-                    cont: str = result.output.cont.strip().removeprefix("local ")
+                    content: str = result.output.content.strip().removeprefix("local ")
                 else:
                     print(f"Unexpected type for result.output: {type(result.output)}")
                     continue
-                if cont.startswith("let ") or cont.startswith("const "):
-                    parts: list[str] = cont.split(" ", 2)
+                if content.startswith("let ") or content.startswith("const "):
+                    parts: list[str] = content.split(" ", 2)
                     try:
-                        cont = f"{parts[2][:parts[2].index("=")]}: {parts[1]}{parts[2][parts[2].index("="):]}"
+                        content = f"{parts[2][:parts[2].index("=")]}: {parts[1]}{parts[2][parts[2].index("="):]}"
                         if parts[1] == "str":
-                            cont = f"str()"
+                            content = f"str()"
                     except IndexError:
                         raise TypeError(f"Not enough parameters for variable definition. Usage: {parts[0]} <type> <name> = <value>`")
-                elif cont.startswith("remark "):
-                    cont = cont.removeprefix("remark ")
-                elif cont.startswith("import "):
-                    parts: list[str] = cont.split(" ", 4)
-                    if "import mavrosq.pkg.requiry as requiry" in output["cont"] and "." not in parts[1]:
+                elif content.startswith("remark "):
+                    content = content.removeprefix("remark ")
+                elif content.startswith("import "):
+                    parts: list[str] = content.split(" ", 4)
+                    if "import mavrosq.pkg.requiry as requiry" in output["content"] and "." not in parts[1]:
                         alias: str = ""
                         if len(parts) > 2:
                             if parts[2] == "as":
                                 alias = parts[3]
-                        cont = f"{alias or parts[1]} = System.public__ensure(lambda: System.public__importPython('{parts[1]}'), None, ModuleNotFoundError) or requiry.public__findService('{parts[1]}.mav')"
+                        content = f"{alias or parts[1]} = System.public__ensure(lambda: System.public__importPython('{parts[1]}'), None, ModuleNotFoundError) or requiry.public__findService('{parts[1]}.mav')"
                     dependencies.append(parts[1])
-                elif cont.startswith("from "):
-                    parts: list[str] = cont.split(" ", 6)
+                elif content.startswith("upload "):
+                    parts: list[str] = content.split(" ", 1)
+                    content = f"self.{parts[1]} = {parts[1]}"
+                elif content.startswith("from "):
+                    parts: list[str] = content.split(" ", 6)
                     if parts[2] != "import":
                         raise SyntaxError("'from' keyword expected 'import'")
-                    if "import mavrosq.pkg.requiry as requiry" in output["cont"] and "." not in parts[1]:
+                    if "import mavrosq.pkg.requiry as requiry" in output["content"] and "." not in parts[1]:
                         alias: str = ""
                         if len(parts) > 4:
                             if parts[4] == "as":
                                 alias = parts[5]
-                        cont = f"{alias or parts[3]} = (System.public__ensure(lambda: System.public__importPython('{parts[1]}'), None, ModuleNotFoundError) or requiry.public__findService('{parts[1]}.mav')).{parts[3]}"
+                        content = f"{alias or parts[3]} = (System.public__ensure(lambda: System.public__importPython('{parts[1]}'), None, ModuleNotFoundError) or requiry.public__findService('{parts[1]}.mav')).{parts[3]}"
                     dependencies.append(parts[1])
-                elif cont.startswith("public const "):
-                    parts: list[str] = cont.split(" ", 4)
+                elif content.startswith("public const "):
+                    parts: list[str] = content.split(" ", 4)
                     try:
-                        cont = f"public__{parts[3][:parts[3].index("=")]}: {parts[2]}{parts[3][parts[3].index("="):]}"
+                        content = f"public__{parts[3][:parts[3].index("=")]}: {parts[2]}{parts[3][parts[3].index("="):]}"
                         if parts[2] == "str":
-                            cont = f"str()"
+                            content = f"str()"
                     except IndexError:
                         raise TypeError(f"Not enough parameters for public variable definition. Usage: `public {parts[1]} <type> <name> = <value>`")
-                elif cont.startswith("public let "):
+                elif content.startswith("public let "):
                     raise TypeError("Variables declared with 'let' cannot be public.")
-                elif cont.startswith("function "):
-                    parts: list[str] = cont.split(" ", 2)
-                    cont = f"def {parts[1]}({parts[2] if len(parts) > 2 else ""}):\n{" " * (original_indent + 4)}..."
+                elif content.startswith("function "):
+                    parts: list[str] = content.split(" ", 2)
+                    content = f"def {parts[1]}({parts[2] if len(parts) > 2 else ""}):\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("method "):
-                    parts: list[str] = cont.split(" ", 2)
-                    cont = f"def {parts[1]}(self, {parts[2] if len(parts) > 2 else ""}):\n{" " * (original_indent + 4)}..."
+                elif content.startswith("method "):
+                    parts: list[str] = content.split(" ", 2)
+                    content = f"def {parts[1]}(self, {parts[2] if len(parts) > 2 else ""}):\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("apply "):
-                    parts: list[str] = cont.split(" ", 1)
-                    cont = f"@{parts[1]}"
-                elif cont.startswith("remote "):
-                    parts: list[str] = cont.split(" ", 3)
-                    cont = f"@lambda _: _()\n{" " * original_indent}class {parts[2]}({parts[1]}):\n{" " * (original_indent + 4)}..."
+                elif content.startswith("apply "):
+                    parts: list[str] = content.split(" ", 1)
+                    content = f"@{parts[1]}"
+                elif content.startswith("remote "):
+                    parts: list[str] = content.split(" ", 3)
+                    content = f"@lambda _: _()\n{" " * original_indent}class {parts[2]}({parts[1]}):\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("root "):
-                    parts: list[str] = cont.split(" ", 2)
+                elif content.startswith("root "):
+                    parts: list[str] = content.split(" ", 2)
                     if parts[1] == "...":
-                        cont = ""
+                        content = ""
                     else:
-                        cont = f"@{parts[1]}"
+                        content = f"@{parts[1]}"
                     self.lns.insert(ln_num, parts[2])
-                elif cont.startswith("special method "):
-                    parts: list[str] = cont.split(" ", 3)
-                    cont = f"def {parts[2]}(self, {parts[3] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."
+                elif content.startswith("special method "):
+                    parts: list[str] = content.split(" ", 3)
+                    content = f"def {parts[2]}(self, {parts[3] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("public function "):
-                    parts: list[str] = cont.split(" ", 3)
-                    cont = f"def public__{parts[2]}({parts[3] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."
+                elif content.startswith("public function "):
+                    parts: list[str] = content.split(" ", 3)
+                    content = f"def public__{parts[2]}({parts[3] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("public method "):
-                    parts: list[str] = cont.split(" ", 3)
-                    cont = f"def public__{parts[2]}(self, {parts[3] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."
+                elif content.startswith("public method "):
+                    parts: list[str] = content.split(" ", 3)
+                    content = f"def public__{parts[2]}(self, {parts[3] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("require "):
-                    parts: list[str] = cont.split(" ", 2)
-                    if "import mavrosq.pkg.requiry as requiry" not in output["cont"]:
+                elif content.startswith("require "):
+                    parts: list[str] = content.split(" ", 2)
+                    if "import mavrosq.pkg.requiry as requiry" not in output["content"]:
                         raise SyntaxError("Attempted fetching of Mavro module while the requiry package wasn't imported.")
-                    cont = f"{parts[1]} = requiry.public__findService('{parts[1]}.mav')"
-                elif cont.startswith("def "):
+                    content = f"{parts[1]} = requiry.public__findService('{parts[1]}.mav')"
+                elif content.startswith("def "):
                     raise SyntaxError("Python 'def' keyword is not supported in Mavro. Use 'function' instead")
-                elif cont.startswith("if "):
-                    parts: list[str] = cont.split(" ", 1)
-                    cont = f"if {parts[1]}:\n{" " * (original_indent + 4)}..."
+                elif content.startswith("if "):
+                    parts: list[str] = content.split(" ", 1)
+                    content = f"if {parts[1]}:\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("else if "):
+                elif content.startswith("else if "):
                     original_indent -= 4
-                    parts: list[str] = cont.split(" ", 1)
-                    cont = f"elif {parts[1]}:\n{" " * (original_indent + 4)}..."
-                elif cont.startswith("elif "):
+                    parts: list[str] = content.split(" ", 1)
+                    content = f"elif {parts[1]}:\n{" " * (original_indent + 4)}..."
+                elif content.startswith("elif "):
                     raise SyntaxError("Python 'elif' keyword is not supported in Mavro. Use 'else if' instead")
-                elif cont == "else":
+                elif content == "else":
                     original_indent -= 4
-                    cont = f"else:\n{" " * (original_indent + 4)}..."
-                elif cont == "try":
-                    cont = f"try:\n{" " * (original_indent + 4)}..."
+                    content = f"else:\n{" " * (original_indent + 4)}..."
+                elif content == "try":
+                    content = f"try:\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont == "finally":
+                elif content == "finally":
                     original_indent -= 4
-                    cont = f"finally:\n{" " * (original_indent + 4)}..."
-                elif cont == "entrypoint":
-                    cont = f"def __entrypoint__() -> int:\n{" " * (original_indent + 4)}..."
+                    content = f"finally:\n{" " * (original_indent + 4)}..."
+                elif content == "entrypoint":
+                    content = f"def __entrypoint__() -> int:\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont == "end":
-                    cont = f"# end"
+                elif content == "end":
+                    content = f"# end"
                     indent -= 4
-                elif cont.startswith("end "):
-                    self.lns.insert(ln_num + 1, cont.removeprefix("end "))
+                elif content.startswith("end "):
+                    self.lns.insert(ln_num + 1, content.removeprefix("end "))
                     indent -= 4
-                elif cont == "only private":
-                    cont = "if __name__ == \"__main__\":"
+                elif content == "only private":
+                    content = "if __name__ == \"__main__\":"
                     indent += 4
-                elif cont == "only public":
-                    cont = "if __name__ != \"__main__\":\n"
+                elif content == "only public":
+                    content = "if __name__ != \"__main__\":\n"
                     indent += 4
-                elif cont == "savelocation":
-                    cont = f"from types import SimpleNamespace\n{" " * original_indent}here = SimpleNamespace(**(globals() | locals()))\n{" " * original_indent}del SimpleNamespace"
-                elif cont.startswith("catch "):
+                elif content == "savelocation":
+                    content = f"from types import SimpleNamespace\n{" " * original_indent}here = SimpleNamespace(**(globals() | locals()))\n{" " * original_indent}del SimpleNamespace"
+                elif content.startswith("catch "):
                     original_indent -= 4
-                    parts: list[str] = cont.split(" ", 1)
-                    cont = f"except {parts[1]}:\n{" " * (original_indent + 4)}..."
-                elif cont.startswith("except "):
+                    parts: list[str] = content.split(" ", 1)
+                    content = f"except {parts[1]}:\n{" " * (original_indent + 4)}..."
+                elif content.startswith("except "):
                     raise SyntaxError("Python 'except' keyword is not supported in Mavro. Use 'catch' instead")
-                elif cont.startswith("while "):
-                    parts: list[str] = cont.split(" ", 1)
-                    cont = f"while {parts[1]}:\n{" " * (original_indent + 4)}..."
+                elif content.startswith("while "):
+                    parts: list[str] = content.split(" ", 1)
+                    content = f"while {parts[1]}:\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("for "):
-                    parts: list[str] = cont.split(" ", 1)
-                    cont = f"for {parts[1]}:\n{" " * (original_indent + 4)}..."
+                elif content.startswith("for "):
+                    parts: list[str] = content.split(" ", 1)
+                    content = f"for {parts[1]}:\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("constructor"):
-                    parts: list[str] = cont.split(" ", 1)
-                    cont = f"def __init__(self, {parts[1] if len(parts) > 1 else ""}):\n{" " * (original_indent + 4)}..."
+                elif content.startswith("constructor"):
+                    parts: list[str] = content.split(" ", 1)
+                    content = f"def __init__(self, {parts[1] if len(parts) > 1 else ""}):\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("extends constructor"):
-                    parts: list[str] = cont.split(" ", 2)
-                    cont = f"def __init__(self, {parts[2] if len(parts) > 2 else ""}):\n{" " * (original_indent + 4)}super().__init__({parts[2] if len(parts) > 2 else ""})"
+                elif content.startswith("extends constructor"):
+                    parts: list[str] = content.split(" ", 2)
+                    content = f"def __init__(self, {parts[2] if len(parts) > 2 else ""}):\n{" " * (original_indent + 4)}super().__init__({parts[2] if len(parts) > 2 else ""})"
                     indent += 4
-                elif cont.startswith("starter"):
-                    parts: list[str] = cont.split(" ", 1)
-                    cont = f"def __starter__(self, {parts[1] if len(parts) > 1 else ""
+                elif content.startswith("starter"):
+                    parts: list[str] = content.split(" ", 1)
+                    content = f"def __starter__(self, {parts[1] if len(parts) > 1 else ""
                     }):\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("startprocess "):
-                    parts: list[str] = cont.split(" ", 1)
-                    cont = f"{parts[1]}.__starter__({parts[2] if len(parts) > 2 else ""})"
-                elif cont.startswith("until "):
-                    parts: list[str] = cont.split(" ", 1)
-                    cont = f"while not {parts[1]}:\n{" " * (original_indent + 4)}..."
+                elif content.startswith("startprocess "):
+                    parts: list[str] = content.split(" ", 1)
+                    content = f"{parts[1]}.__starter__({parts[2] if len(parts) > 2 else ""})"
+                elif content.startswith("until "):
+                    parts: list[str] = content.split(" ", 1)
+                    content = f"while not {parts[1]}:\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("class "):
-                    parts: list[str] = cont.split(" ", 3)
+                elif content.startswith("class "):
+                    parts: list[str] = content.split(" ", 3)
                     if parts[2] == "extends" and len(parts) > 3:
-                        cont = f"class {parts[1]}({parts[3]}):\n{" " * (original_indent + 4)}..."
+                        content = f"class {parts[1]}({parts[3]}):\n{" " * (original_indent + 4)}..."
                     else:
-                        cont = f"class {parts[1]}:\n{" " * (original_indent + 4)}..."
+                        content = f"class {parts[1]}:\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("public class "):
-                    parts: list[str] = cont.split(" ", 4)
+                elif content.startswith("public class "):
+                    parts: list[str] = content.split(" ", 4)
                     if parts[3] == "extends" and len(parts) > 3:
-                        cont = f"class public__{parts[2]}({parts[4]}):\n{" " * (original_indent + 4)}..."
+                        content = f"class public__{parts[2]}({parts[4]}):\n{" " * (original_indent + 4)}..."
                     else:
-                        cont = f"class public__{parts[2]}:\n{" " * (original_indent + 4)}..."
+                        content = f"class public__{parts[2]}:\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("manager "):
-                    parts: list[str] = cont.split(" ", 1)
-                    cont = f"with {parts[1]}:\n{" " * (original_indent + 4)}..."
+                elif content.startswith("manager "):
+                    parts: list[str] = content.split(" ", 1)
+                    content = f"with {parts[1]}:\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("with "):
+                elif content.startswith("with "):
                     raise SyntaxError("Python 'with' keyword is not supported in Mavro. Use 'manager' instead")
-                elif cont.startswith("openfile "):
-                    parts: list[str] = cont.split(" ", 2)
-                    cont = f"with open({parts[1]}, {parts[2]}) as file:\n{" " * (original_indent + 4)}..."
+                elif content.startswith("openfile "):
+                    parts: list[str] = content.split(" ", 2)
+                    content = f"with open({parts[1]}, {parts[2]}) as file:\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif cont.startswith("package "):
-                    parts: list[str] = cont.split(" ", 1)
+                elif content.startswith("package "):
+                    parts: list[str] = content.split(" ", 1)
                     try:
                         package_name: str = parts[1]
                     except IndexError:
@@ -312,16 +315,16 @@ end
                         package_result: str | Exception = self.loadPackage(package, PackageImportType.AS, package.name)
                         if isinstance(package_result, Exception):
                             raise package_result
-                        cont = package_result
+                        content = package_result
                     except Exception as exception:
                         raise exception
-                elif self._includeKwCheck(cont):
+                elif self._includeKwCheck(content):
                     ...
                 else:
-                    parts: list[str] = cont.split(" ", 1)
-                    cont = f"{parts[0]}({parts[1] if len(parts) > 1 else ""})"
-                cont = f"{" " * original_indent}{cont}"
-                output["cont"] += cont + "\n" # NOQA
+                    parts: list[str] = content.split(" ", 1)
+                    content = f"{parts[0]}({parts[1] if len(parts) > 1 else ""})"
+                content = f"{" " * original_indent}{content}"
+                output["content"] += content + "\n" # NOQA
                 indent += result.output.indent # NOQA
         except Exception as exception:  # NOQA
             if "--verbose" in sys.argv:

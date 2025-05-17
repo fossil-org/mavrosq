@@ -13,8 +13,8 @@ from mavrosq import version
 setup(
     name='mavrosq',
     version=version,
-    author='astridot',
-    author_email='pixilreal@gmail.com',
+    author='fossil-org',
+    author_email='fossil-org1@gmail.com',
     description='An easy to understand language built from Python.',
     long_description=read_long_description(),
     long_description_content_type='text/markdown',

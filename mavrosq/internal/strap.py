@@ -28,7 +28,7 @@ def strap(parser: LensParser, print: Callable = print, *packages: Package, retur
             ...
         if "--verbose" in sys.argv:
             raise result.error
-    cont: str = result.output.cont if not result.error else ""
+    content: str = result.output.content if not result.error else ""
     if return_dependencies:
-        return cont, result.dependencies
-    return cont
+        return content, result.dependencies
+    return content

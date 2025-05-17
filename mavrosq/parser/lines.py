@@ -20,25 +20,25 @@ class LineParserNextSuggestion:
 
 
 class LineParser:
-    def __init__(self, cont: str | None = None) -> None:
+    def __init__(self, content: str | None = None) -> None:
         self.id: str = str(uuid4())
-        self.cont: str = self.id if cont is None else cont
+        self.content: str = self.id if content is None else content
         self.stack: list[LineParser] = []
 
     def hasCont(self) -> bool:
-        return self.cont != self.id
+        return self.content != self.id
 
-    def next(self, cont: str) -> "LineParser":
-        lp: LineParser = LineParser(cont)
+    def next(self, content: str) -> "LineParser":
+        lp: LineParser = LineParser(content)
         self.stack.append(lp)
         return lp
 
     def applyIndentation(self, indent: int) -> "LineParser":
-        self.cont = " " * indent + self.cont.replace("\t", "    ").lstrip(" ")
+        self.content = " " * indent + self.content.replace("\t", "    ").lstrip(" ")
         return self
 
     def parse(self) -> LineParserResult:
-        self.cont = self.cont.rstrip(";")
+        self.content = self.content.rstrip(";")
 
         def error(exc: Exception) -> LineParserResult:
             return LineParserResult(
@@ -48,7 +48,7 @@ class LineParser:
             )
 
         output: dict[str, Any] = {
-            "cont": "",
+            "content": "",
             "indent": 0,
             "suggestions": []
         }
@@ -57,36 +57,36 @@ class LineParser:
                 raise TypeError("Cannot parse using a baseline parser.")
             in_string: str = ""
             skip_next: int = 0
-            for index, char in enumerate(self.cont):
+            for index, char in enumerate(self.content):
                 if skip_next > 0:
                     skip_next -= 1
                     continue
                 try:
-                    nearest_char_left: str = self.cont[index - 1]
+                    nearest_char_left: str = self.content[index - 1]
                 except IndexError:
                     nearest_char_left: str = ""
                 try:
-                    nearest_char_right: str = self.cont[index + 1]
+                    nearest_char_right: str = self.content[index + 1]
                 except IndexError:
                     nearest_char_right: str = ""
                 ############################################################### CUSTOM FUNCTIONALITY
                 # SERVICE GET FUNCTIONALITY
                 if char == ":" and not in_string and (nearest_char_left.isalnum() or nearest_char_left in ")]") and nearest_char_right == ":" and index != 0:
-                    output["cont"] += ".public__"
+                    output["content"] += ".public__"
                     skip_next += 1
                 elif char == "#" and not in_string:
                     break
                 elif char in "\"'":
                     if (char == in_string) and nearest_char_left != "\\":
                         in_string = ""
-                        output["cont"] += "\")"
+                        output["content"] += "\")"
                     elif not in_string:
                         in_string = char
-                        output["cont"] += "System.String(f\""
+                        output["content"] += "System.String(f\""
                     else:
-                        output["cont"] += char
+                        output["content"] += char
                 else:
-                    output["cont"] += char
+                    output["content"] += char
         except Exception as exception:  # NOQA
             if "--verbose" in sys.argv:
                 raise exception

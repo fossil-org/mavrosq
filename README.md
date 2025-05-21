@@ -25,13 +25,13 @@ gavel install fossil-org mavrosq
     ```commandline
     mavrosq -c
     ```
-   This creates a main.mvsq file in your current working directory
-4. You can navigate to the main.mvsq file in your IDE or text editor, and start coding!
+   This creates a main.msq file in your current working directory
+4. You can navigate to the main.msq file in your IDE or text editor, and start coding!
     When you want to run your project, use the following command:
        ```
-       mavrosq main.mvsq
+       mavrosq main.msq
        ```
-   Replace main.mvsq with your file name.
+   Replace main.msq with your file name.
 
 ## Keyword list (58: 30 imported from python, 28 new)
 - and - imported from python. Only returns true if both the left-hand AND right-hand conditions are true.

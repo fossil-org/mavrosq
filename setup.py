@@ -8,14 +8,14 @@ def read_long_description():
     with open('README.md', encoding='utf-8') as f:
         return f.read()
 
-from mavrosq import version
+from msq import version
 
 setup(
-    name='mavrosq',
+    name='msq',
     version=version,
     author='fossil-org',
     author_email='fossil-org1@gmail.com',
-    description='An easy to understand language built from Python.',
+    description='an easy to understand language built from Python.',
     long_description=read_long_description(),
     long_description_content_type='text/markdown',
     packages=find_packages(),
@@ -28,10 +28,8 @@ setup(
     install_requires=["pyinstaller"],
     entry_points={
         'console_scripts': [
-            'mavsq=mavrosq.internal.build:build_from_sys_argv',
-            'mavrosq=mavrosq.internal.build:build_from_sys_argv',
-            'mvsq=mavrosq.internal.build:build_from_sys_argv',
-            'msq=mavrosq.internal.build:build_from_sys_argv'
+            'mavrosq=msq.internal.build:build_from_sys_argv',
+            'msq=msq.internal.build:build_from_sys_argv',
         ]
     },
 )

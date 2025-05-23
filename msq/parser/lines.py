@@ -78,7 +78,7 @@ class LineParser:
                 elif output["ht"]:
                     output["content"] += char
                 elif char == "<" and nearest_char_right == "<" and not output["ht"]:
-                    output["content"] += f"{'remark ' if index == 0 else ''}System.Ht(\"\"\""
+                    output["content"] += f"{'remark ' if index == 0 else ''}Ht(\"\"\""
                     skip_next += 1
                     output["ht"] = True
                 elif char == ":" and not in_string and (nearest_char_left.isalnum() or nearest_char_left in ")]") and nearest_char_right == ":" and index != 0:

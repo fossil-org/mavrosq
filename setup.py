@@ -1,5 +1,5 @@
 """
-DISCLAIMER: This file should be preserved even when Mavro² isn't available on PyPI because gavel uses pipx and pipx uses setup.py!!!
+DISCLAIMER: This file should be preserved even when msq isn't available on PyPI because gavel uses pipx and pipx uses setup.py!!!
 """
 
 from setuptools import setup, find_packages
@@ -13,7 +13,7 @@ from msq import version
 setup(
     name='msq',
     version=version,
-    author='fossil-org',
+    author='FOSSIL',
     author_email='fossil-org1@gmail.com',
     description='an easy to understand language built from Python.',
     long_description=read_long_description(),
@@ -28,8 +28,7 @@ setup(
     install_requires=["pyinstaller"],
     entry_points={
         'console_scripts': [
-            'mavrosq=msq.internal.build:build_from_sys_argv',
-            'msq=msq.internal.build:build_from_sys_argv',
+            'msq=msq.internal.build:build_from_sys_argv'
         ]
     },
 )

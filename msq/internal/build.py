@@ -56,7 +56,7 @@ def build_from_sys_argv() -> None:
         args.append(".")
     if args[1] in ["--version", "-v"]:
         from .. import version
-        print(f"Mavro² version: {version}")
+        print(f"msq version: {version}")
         sys.exit(0)
     elif args[1] == "--github":
         os.system("start https://github.com/fossil-org/mavrosq")

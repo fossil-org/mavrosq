@@ -21,11 +21,9 @@ from msq.pkg.std import *
 const System System = System()
 package console
 package string
-package ht
 System::merge console.Console(), method=System.ORIGIN
 System::merge string.String, method=System.ORIGIN
 System::merge string.BaseString, method=System.ORIGIN
-System::merge ht.Ht(), method=System.ORIGIN
 startprocess System.Console
 const console.Console Console = System.Console
 const string.String String = System.String
@@ -41,7 +39,7 @@ const callable print = _deprecated("print", "Console::print")
 const callable input = _deprecated("input", "Console::input")
 const callable exit = _deprecated("exit", "System::exit")
 const callable str = _deprecated("str", "System.String")
-del console, string, ht, _deprecated
+del console, string, _deprecated
 """.strip().split("\n")
     LINE_LOADER_AFTER: list[str] = """
 try
@@ -76,7 +74,7 @@ end
     @staticmethod
     def loadPackage(package: Package, import_type: PackageImportType, arg: str) -> str | Exception:
         if package.origin != "msq/pkg":
-            return ImportError("Tried retrieving a package that doesn't seem to originate from mavro²'s verified pkg source (msq/pkg)")
+            return ImportError("Tried retrieving a package that doesn't seem to originate from msq's verified pkg source (msq/pkg)")
         text: str | Exception = package.getImportStatement(import_type, arg)
         return text
     @staticmethod
@@ -89,8 +87,8 @@ end
                 return True
         return False
     @staticmethod
-    def _invalidKw(mavro: str, py: str) -> None:
-        raise SyntaxError(f"'{py}' keyword is not supported in mavro2. Use '{mavro}' instead")
+    def _invalidKw(msq: str, py: str) -> None:
+        raise SyntaxError(f"'{py}' keyword is not supported in msq. Use '{msq}' instead")
     def parse(self) -> LensParserResult:
         def error(exc: Exception) -> LensParserResult:
             return LensParserResult(
@@ -158,6 +156,9 @@ end
                 elif content.startswith("upload "):
                     parts: list[str] = content.split(" ", 1)
                     content = f"self.{parts[1]} = {parts[1]}"
+                elif content.startswith("initpkg "):
+                    parts: list[str] = content.split(" ", 2)
+                    content = f"{parts[1].capitalize().split("(")[0]} = {parts[1].split("(")[0]}.{parts[1].capitalize()}({parts[2] if len(parts) > 2 else ''})"
                 elif content.startswith("from "):
                     parts: list[str] = content.split(" ", 6)
                     if parts[2] != "import":
@@ -170,13 +171,15 @@ end
                         content = f"{alias or parts[3]} = (System.public__ensure(lambda: System.public__importPython('{parts[1]}'), None, ModuleNotFoundError) or requiry.public__findService('{parts[1]}.mav')).{parts[3]}"
                     dependencies.append(parts[1])
                 elif content.startswith("public const "):
-                    parts: list[str] = content.split(" ", 4)
+                    parts: list[str] = content.split(" ", 3)
                     try:
-                        content = f"public__{parts[3][:parts[3].index("=")]}: {parts[2]}{parts[3][parts[3].index("="):]}"
+                        value = parts[3][parts[3].index("="):].strip("= \t")
+                        init_value = f"{parts[2]}({value.removeprefix('init')})"
+                        content = f"public__{parts[3][:parts[3].index("=")]}: {parts[2]} = {init_value if value.startswith('init ') or value == 'init' else value}"
                         if parts[2] == "str":
                             content = f"str()"
                     except IndexError:
-                        raise TypeError(f"Not enough parameters for public variable definition. Usage: `public {parts[1]} <type> <name> = <value>`")
+                        raise TypeError(f"Not enough parameters for public variable definition. Usage: public {parts[1]} <type> <name> = <value>`")
                 elif content.startswith("public let "):
                     raise TypeError("Variables declared with 'let' cannot be public.")
                 elif content.startswith("function "):
@@ -187,23 +190,12 @@ end
                     parts: list[str] = content.split(" ", 2)
                     content = f"def {parts[1]}(self, {parts[2] if len(parts) > 2 else ""}):\n{" " * (original_indent + 4)}..."
                     indent += 4
-                elif content.startswith("apply "):
+                elif content.startswith("deco "):
                     parts: list[str] = content.split(" ", 1)
                     content = f"@{parts[1]}"
                 elif content.startswith("remote "):
                     parts: list[str] = content.split(" ", 3)
                     content = f"@lambda _: _()\n{" " * original_indent}class {parts[2]}({parts[1]}):\n{" " * (original_indent + 4)}..."
-                    indent += 4
-                elif content.startswith("deco "):
-                    parts: list[str] = content.split(" ", 2)
-                    if parts[1] == "...":
-                        content = ""
-                    else:
-                        content = f"@{parts[1]}"
-                    self.lns.insert(ln_num, parts[2])
-                elif content.startswith("special method "):
-                    parts: list[str] = content.split(" ", 3)
-                    content = f"def {parts[2]}(self, {parts[3] if len(parts) > 3 else ""}):\n{" " * (original_indent + 4)}..."
                     indent += 4
                 elif content.startswith("public function "):
                     parts: list[str] = content.split(" ", 3)
@@ -216,7 +208,7 @@ end
                 elif content.startswith("require "):
                     parts: list[str] = content.split(" ", 2)
                     if "import msq.pkg.requiry as requiry" not in output["content"]:
-                        raise SyntaxError("Attempted fetching of Mavro module while the requiry package wasn't imported.")
+                        raise SyntaxError("Attempted fetching of msq module while the requiry package wasn't imported.")
                     content = f"{parts[1]} = requiry.public__findService('{parts[1]}.mav')"
                 elif content.startswith("def "):
                     self._invalidKw("function", "def")

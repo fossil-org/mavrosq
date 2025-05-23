@@ -48,3 +48,15 @@ const bool adult = <<
 - replaced the `press return to submit a report, ctrl-c to exit` prompt when your program encounters an error with a simple hint and a url to get help
 - single-quoted strings (`'`) are no longer automatically mapped to double-quoted strings (`"`)
 - `paint` function from `paint` package now adds `$reset$` at the end of your string automatically
+
+# 0.15
+
+- `Ht` is no longer packaged and system merged by default
+- - to use `<<` and `>>` syntax, add `package ht` then `initpkg Ht` to your program
+- new package `workspace`
+- - not packaged by default, use `package workspace` to package
+- - not system merged by default, use `System::merge workspace.Workspace(), method=System.ORIGIN` to merge
+- - allows you to quickly manage files and paths in your project
+- new `initpkg` keyword
+- - info in `README.md`
+- updated keyword list in `README.md`

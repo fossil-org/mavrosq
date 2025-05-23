@@ -11,7 +11,7 @@ def public__findService(module: str) -> _ModuleType | None:
     pyname: str = f"{module.removesuffix(".msq")}_requiry.py"
     try:
         if not _path.exists(module):
-            raise ImportError(f"Mavro² module '{module}' not found in '{_os.getcwd()}'")
+            raise ImportError(f"msq module '{module}' not found in '{_os.getcwd()}'")
         from ..internal.build import build
         build(
             path=module,

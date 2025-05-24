@@ -71,16 +71,19 @@ class LineParser:
                     nearest_char_right: str = self.content[index + 1]
                 except IndexError:
                     nearest_char_right: str = ""
-                if char == ">" and nearest_char_right == ">" and output["ht"]:
+                if char == ">" and nearest_char_right == ">" and output["ht"] and not in_string:
                     output["content"] += "\"\"\")"
                     skip_next += 1
                     output["ht"] = False
-                elif output["ht"]:
+                elif output["ht"] and not in_string:
                     output["content"] += char
-                elif char == "<" and nearest_char_right == "<" and not output["ht"]:
+                elif char == "<" and nearest_char_right == "<" and not output["ht"] and not in_string:
                     output["content"] += f"{'remark ' if index == 0 else ''}Ht(\"\"\""
                     skip_next += 1
                     output["ht"] = True
+                elif char == "-" and nearest_char_right == ">" and not in_string:
+                    output["content"] += "-Arrow+"
+                    skip_next += 1
                 elif char == ":" and not in_string and (nearest_char_left.isalnum() or nearest_char_left in ")]") and nearest_char_right == ":" and index != 0:
                     output["content"] += ".public__"
                     skip_next += 1

@@ -1,7 +1,6 @@
 from typing import Iterator
 
 from .std import System
-from .remote import Base
 
 
 class String(str):
@@ -10,7 +9,5 @@ class String(str):
     def length(self) -> int:
         return len(self)
 
-class BaseString(Base, String):
+class BaseString(String):
     ORIGIN: str = ""
-    def toStr(self) -> str:
-        return self.to(str)

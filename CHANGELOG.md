@@ -60,3 +60,33 @@ const bool adult = <<
 - new `initpkg` keyword
 - - info in `README.md`
 - updated keyword list in `README.md`
+
+# 0.16
+
+- `initpkg` keyword removed
+- `package` keyword reworked
+- - use `package hello` to get a package (just like before)
+- - use `package hello init` to get a package and create a local variable for it's main object (`package hello init` translates to
+```
+package hello
+const type[hello.Hello] Hello = hello.Hello
+```
+and `package hello init value=1` translates to
+```
+package hello
+const hello.Hello Hello = hello.Hello(value=1)
+```
+)
+- - to pass no arguments to the `init` variant of `package`, use `pass` as the first parameter.
+- new package `arrow` with syntax `->`
+- - typecasts a value
+- - example:
+```
+package arrow init pass
+
+Console::print type(21 -> String)
+# output: String
+```
+- - this allows for this syntax too: `remark 21 -> Console::print`
+- - or: `remark "Enter your name: " -> Console::input -> Console::print`
+- many qol changes

@@ -90,7 +90,6 @@ gavel install fossil-org mavrosq
 - until - NEW. Loops until a condition is true. Python equivalent: `while not`
 - upload - NEW. Uploads a variable to `self`. `upload variable` translates to `remark self.variable = variable`
 - init - NEW. Used in place of the value argument when defining a constant or let. Sets the value to an object of the type. `const Person person = init name="Bob"` translates to `const Person person = Person(name="Bob")`
-- initpkg - NEW. Compact version to create an object from a package or module that supports this. `initpkg Pkg(2)` translates to `const pkg.Pkg Pkg = init 2`
 - while - imported from python. Loops while a condition is true.
 - yield - imported from python. Yields a value from a generator function.
 - remark - NEW. Remark an expression.

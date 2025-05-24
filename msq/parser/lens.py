@@ -19,14 +19,12 @@ class LensParser:
     LINE_LOADER_BEFORE: list[str] = """
 from msq.pkg.std import *
 const System System = System()
-package console
-package string
-System::merge console.Console(), method=System.ORIGIN
-System::merge string.String, method=System.ORIGIN
+package console init pass
+package string init
+System::merge Console, method=System.ORIGIN
+System::merge String, method=System.ORIGIN
 System::merge string.BaseString, method=System.ORIGIN
 startprocess System.Console
-const console.Console Console = System.Console
-const string.String String = System.String
 savelocation
 
 function _deprecated name, sub=null
@@ -156,9 +154,6 @@ end
                 elif content.startswith("upload "):
                     parts: list[str] = content.split(" ", 1)
                     content = f"self.{parts[1]} = {parts[1]}"
-                elif content.startswith("initpkg "):
-                    parts: list[str] = content.split(" ", 2)
-                    content = f"{parts[1].capitalize().split("(")[0]} = {parts[1].split("(")[0]}.{parts[1].capitalize()}({parts[2] if len(parts) > 2 else ''})"
                 elif content.startswith("from "):
                     parts: list[str] = content.split(" ", 6)
                     if parts[2] != "import":
@@ -302,12 +297,8 @@ end
                     indent += 4
                 elif content.startswith("with "):
                     self._invalidKw("manager", "with")
-                elif content.startswith("openfile "):
-                    parts: list[str] = content.split(" ", 2)
-                    content = f"with open({parts[1]}, {parts[2]}) as file:\n{" " * (original_indent + 4)}..."
-                    indent += 4
                 elif content.startswith("package "):
-                    parts: list[str] = content.split(" ", 1)
+                    parts: list[str] = content.split(" ", 3)
                     try:
                         package_name: str = parts[1]
                     except IndexError:
@@ -321,6 +312,8 @@ end
                         if isinstance(package_result, Exception):
                             raise package_result
                         content = package_result
+                        if len(parts) > 2 and parts[2] == "init":
+                            content += f"\n{" " * original_indent}{parts[1].capitalize().split("(")[0]} = {parts[1].split("(")[0]}.{parts[1].capitalize()}{('()' if parts[3] == 'pass' else parts[3]) if len(parts) > 3 else ''}"
                     except Exception as exception:
                         raise exception
                 elif self._includeKwCheck(content):

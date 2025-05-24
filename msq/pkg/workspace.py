@@ -37,9 +37,15 @@ class WsPath(System.BaseClass):
         shutil.rmtree(self.__path)
     def toString(self) -> String:
         return String(self.__path)
+    def __str__(self) -> str:
+        return str(self.toString())
 
 class Workspace(System.BaseClass):
     def public__getPath(self, *path: str) -> WsPath:
         return WsPath(os.path.join(os.path.abspath("."), *path))
+    def public__getRes(self, *path: str) -> WsPath:
+        return self.public__getPath("res", *path)
     def public__getPathFromRoot(self, *path: str) -> WsPath:
         return WsPath(os.path.join("C:\\" if os.name == "nt" else "/", *path))
+    def __str__(self) -> str:
+        return str(self.public__getPath())

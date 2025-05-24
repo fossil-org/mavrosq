@@ -1,15 +1,13 @@
-from typing import Any as _Any
+from typing import Any as Any
 
-from .std import System as _System
+from .std import System
 
 
-class Base(_System.BaseClass):
-    ORIGIN: _Any = None
+class Base(System.BaseClass):
+    ORIGIN: Any = None
     def __init__(self) -> None:
         super().__init__()
     def __int__(self) -> int:
-        return self.to(int)
+        return int(self.ORIGIN)
     def __str__(self) -> str:
-        return self.to(str)
-    def to(self, type_) -> _Any:
-        return type_(self.ORIGIN)
+        return str(self.ORIGIN)

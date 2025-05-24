@@ -1,6 +1,4 @@
-from .remote import Base as _Base
+from .remote import Base
 
-class BaseInteger(_Base, int):
+class BaseInteger(Base, int):
     ORIGIN: int = 0
-    def toInt(self) -> int:
-        return self.to(int)
